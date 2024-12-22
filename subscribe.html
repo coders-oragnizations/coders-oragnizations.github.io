@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Подписка - Кодерская Компания</title>
+    <title>Подписка на рассылку</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="scripts.js" defer></script>
 </head>
 <body>
     <header>
@@ -25,7 +24,22 @@
             <input type="email" id="email" name="email" required>
             <button type="submit">Подписаться</button>
         </form>
-        <p id="message"></p>
     </main>
+
+    <script>
+        document.getElementById('subscribe-form').addEventListener('submit', function(event) {
+            event.preventDefault();  // Останавливаем отправку формы по умолчанию
+
+            var email = document.getElementById('email').value;
+
+            // Формирование ссылки mailto с данными
+            var subject = 'Подписка на рассылку';
+            var body = 'Новый подписчик: ' + email;
+            var mailtoLink = 'mailto:admin@itsystemshelp.ru?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+            // Открытие почтового клиента
+            window.location.href = mailtoLink;
+        });
+    </script>
 </body>
 </html>
