@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <header>
         <nav>
             <ul>
-                <li><a href="index.php">Главная</a></li>
+                <li><a href="index.html">Главная</a></li>
                 <li><a href="about.php">О нас</a></li>
                 <li><a href="contact.php">Контакты</a></li>
                 <li><a href="subscribe.php">Подписка</a></li>
