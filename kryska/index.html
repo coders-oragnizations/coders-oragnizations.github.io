@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hamster Clicker</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #hamster {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .store {
+            margin-top: 20px;
+        }
+        .btn {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            background: #ffa500;
+            border: none;
+            cursor: pointer;
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hamster Clicker</h1>
+    <h2>Монеты: <span id="coins">0</span></h2>
+    <img id="hamster" src="https://avatars.mds.yandex.net/i?id=176cc55654c2baa23ef275a11f39069b_l-9149651-images-thumbs&n=13" alt="Hamster">
+    
+    <div class="store">
+        <button class="btn" onclick="buyUpgrade(10, 'clickBoost', 1)">Буст клика (10 монет)</button>
+        <button class="btn" onclick="buyUpgrade(50, 'autoClick', 1)">Автокликер (50 монет)</button>
+    </div>
+
+    <script>
+        let coins = parseInt(localStorage.getItem('coins')) || 0;
+        let clickBoost = parseInt(localStorage.getItem('clickBoost')) || 1;
+        let autoClick = parseInt(localStorage.getItem('autoClick')) || 0;
+        
+        document.getElementById('coins').textContent = coins;
+        
+        document.getElementById('hamster').addEventListener('click', () => {
+            coins += clickBoost;
+            updateCoins();
+        });
+        
+        function buyUpgrade(cost, type, value) {
+            if (coins >= cost) {
+                coins -= cost;
+                if (type === 'clickBoost') clickBoost += value;
+                if (type === 'autoClick') autoClick += value;
+                updateCoins();
+                saveProgress();
+            }
+        }
+        
+        function updateCoins() {
+            document.getElementById('coins').textContent = coins;
+            saveProgress();
+        }
+        
+        function saveProgress() {
+            localStorage.setItem('coins', coins);
+            localStorage.setItem('clickBoost', clickBoost);
+            localStorage.setItem('autoClick', autoClick);
+        }
+        
+        setInterval(() => {
+            coins += autoClick;
+            updateCoins();
+        }, 1000);
+    </script>
+</body>
+</html>
