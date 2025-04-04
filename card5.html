@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeBank Finland - 3D BEPay Card</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a3a6e, #0c1f3d);
+            perspective: 1000px;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .scene {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 30px;
+            position: relative;
+            height: 250px;
+        }
+
+        .card-container {
+            width: 300px;
+            height: 190px;
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            cursor: grab;
+            transform: scale(1);
+            z-index: 10;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Толстые 3D края карты */
+        .card::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #001a33;
+            border-radius: 15px;
+            transform: translateZ(-5px);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            width: calc(100% - 10px);
+            height: calc(100% - 10px);
+            background: #00264d;
+            border-radius: 12px;
+            top: 5px;
+            left: 5px;
+            transform: translateZ(-3px);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #0056b3, #003366);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transform: translateZ(2px);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #003366, #001a33);
+            transform: rotateY(180deg) translateZ(2px);
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bank-logo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bepay-logo {
+            font-weight: bold;
+            font-size: 18px;
+            color: #ffffff;
+        }
+
+        .bebank-logo {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .card-number {
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-align: center;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .balance {
+            font-size: 22px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .card-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .card-holder {
+            text-transform: uppercase;
+        }
+
+        .expiry-date {
+            text-align: right;
+        }
+
+        .contactless-icon {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .magnetic-strip {
+            height: 40px;
+            background: #000;
+            margin-top: 10px;
+            box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+        }
+
+        .cvv-area {
+            background: #fff;
+            color: #000;
+            padding: 5px;
+            margin: 15px 0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-radius: 4px;
+            width: 80%;
+            align-self: flex-end;
+        }
+
+        .cvv-label {
+            margin-right: 10px;
+            font-size: 12px;
+        }
+
+        .cvv-value {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            width: 50px;
+            text-align: center;
+            background: #eee;
+            padding: 3px;
+            border-radius: 3px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: auto;
+        }
+
+        .light-effect {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: white;
+            filter: blur(60px);
+            opacity: 0.1;
+            border-radius: 50%;
+        }
+
+        .light-1 {
+            top: -50px;
+            left: -50px;
+        }
+
+        .light-2 {
+            bottom: -50px;
+            right: -50px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .terminal {
+            background: #f0f0f0;
+            border-radius: 15px;
+            padding: 25px;
+            width: 280px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            height: 35px;
+            background: #222;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            z-index: 1;
+        }
+
+        .terminal-display {
+            background: #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .terminal-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .terminal-btn {
+            background: #0056b3;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+            transition: all 0.3s;
+        }
+
+        .terminal-btn:hover {
+            background: #003d82;
+            transform: translateY(-2px);
+        }
+
+        .terminal-btn:active {
+            transform: translateY(1px);
+        }
+
+        .pay-btn {
+            width: 100%;
+            background: #28a745;
+            margin-top: 10px;
+        }
+
+        .pay-btn:hover {
+            background: #218838;
+        }
+
+        .payment-status {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 24px;
+            position: relative;
+            z-index: 2;
+            color: #333;
+        }
+
+        .card-slot {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 330px;
+            height: 40px;
+            background: #222;
+            border-radius: 8px;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-slot::after {
+            content: "";
+            position: absolute;
+            width: 90%;
+            height: 15px;
+            background: #444;
+            border-radius: 5px;
+        }
+
+        .processing {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            border-radius: 15px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .processing.active {
+            opacity: 1;
+        }
+
+        @keyframes cardInsert {
+            0% {
+                transform: scale(1) translateY(0) rotateX(0) rotateY(0);
+            }
+            30% {
+                transform: scale(0.9) translateY(80px) rotateX(20deg) rotateY(0);
+            }
+            60% {
+                transform: scale(0.85) translateY(120px) rotateX(40deg) rotateY(0);
+            }
+            100% {
+                transform: scale(0.8) translateY(150px) rotateX(60deg) rotateY(0);
+                opacity: 0;
+            }
+        }
+
+        @keyframes cardEject {
+            0% {
+                transform: scale(0.8) translateY(150px) rotateX(60deg) rotateY(0);
+                opacity: 0;
+            }
+            40% {
+                transform: scale(0.85) translateY(120px) rotateX(40deg) rotateY(0);
+                opacity: 1;
+            }
+            70% {
+                transform: scale(0.9) translateY(80px) rotateX(20deg) rotateY(0);
+            }
+            100% {
+                transform: scale(1) translateY(0) rotateX(0) rotateY(0);
+            }
+        }
+
+        @keyframes terminalFlash {
+            0% { background-color: #e0e0e0; }
+            50% { background-color: #c8e6c9; }
+            100% { background-color: #e0e0e0; }
+        }
+
+        .terminal-flash {
+            animation: terminalFlash 1s;
+        }
+    </style>
+</head>
+<body>
+    <div class="scene">
+        <div class="card-slot"></div>
+        <div class="card-container" id="cardContainer">
+            <div class="card">
+                <!-- Front side -->
+                <div class="card-front">
+                    <div class="light-effect light-1"></div>
+                    <div class="light-effect light-2"></div>
+                    <div class="bank-logo">
+                        <div class="bepay-logo">BEPay</div>
+                        <div class="bebank-logo">BeBank Finland</div>
+                    </div>
+                    <div class="card-number">5265 9087 6457 9237</div>
+                    <div class="balance">€<span id="balance">1000</span></div>
+                    <div class="card-details">
+                        <div class="card-holder">BEGULA BEGULICH</div>
+                        <div class="expiry-date">12/50</div>
+                    </div>
+                    <div class="contactless-icon">⌘</div>
+                </div>
+                
+                <!-- Back side -->
+                <div class="card-back">
+                    <div class="light-effect light-1"></div>
+                    <div class="light-effect light-2"></div>
+                    <div class="magnetic-strip"></div>
+                    <div class="cvv-area">
+                        <div class="cvv-label">CVV</div>
+                        <div class="cvv-value">228</div>
+                    </div>
+                    <div class="signature-line">Authorized Signature</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="minusBtn">-10€</button>
+        <button class="btn" id="plusBtn">+10€</button>
+    </div>
+
+    <div class="terminal" id="terminal">
+        <div class="processing" id="processing">Processing payment...</div>
+        <div class="terminal-display" id="terminalAmount">€5</div>
+        <div class="terminal-controls">
+            <button class="terminal-btn" id="terminalMinusBtn">-5€</button>
+            <button class="terminal-btn" id="terminalPlusBtn">+5€</button>
+        </div>
+        <button class="terminal-btn pay-btn" id="payBtn">Pay</button>
+        <div class="payment-status" id="paymentStatus"></div>
+    </div>
+
+    <script>
+        // Card elements
+        const cardContainer = document.getElementById('cardContainer');
+        let isDragging = false;
+        let isScaling = false;
+        let startX, startY;
+        let rotateX = 0, rotateY = 0;
+        let currentX = 0, currentY = 0;
+        let scale = 1;
+        let startDistance = 0;
+
+        // Balance elements
+        const balanceElement = document.getElementById('balance');
+        let balance = 1000;
+
+        // Terminal elements
+        const terminalAmountElement = document.getElementById('terminalAmount');
+        const paymentStatusElement = document.getElementById('paymentStatus');
+        const processingElement = document.getElementById('processing');
+        const terminalElement = document.getElementById('terminal');
+        let terminalAmount = 5;
+
+        // Buttons
+        const minusBtn = document.getElementById('minusBtn');
+        const plusBtn = document.getElementById('plusBtn');
+        const terminalMinusBtn = document.getElementById('terminalMinusBtn');
+        const terminalPlusBtn = document.getElementById('terminalPlusBtn');
+        const payBtn = document.getElementById('payBtn');
+
+        // Update balance display
+        function updateBalance() {
+            balanceElement.textContent = balance;
+        }
+
+        // Update terminal amount
+        function updateTerminalAmount() {
+            terminalAmountElement.textContent = `€${terminalAmount}`;
+        }
+
+        // Animate payment process
+        function animatePayment() {
+            return new Promise((resolve) => {
+                // Animate card insertion
+                cardContainer.style.animation = 'cardInsert 1s forwards';
+                cardContainer.style.cursor = 'default';
+                
+                setTimeout(() => {
+                    // Show processing
+                    processingElement.classList.add('active');
+                    terminalAmountElement.classList.add('terminal-flash');
+                    
+                    setTimeout(() => {
+                        // Hide processing
+                        processingElement.classList.remove('active');
+                        
+                        // Animate card ejection
+                        cardContainer.style.animation = 'cardEject 1s forwards';
+                        
+                        setTimeout(() => {
+                            // Reset animation
+                            cardContainer.style.animation = '';
+                            cardContainer.style.cursor = 'grab';
+                            terminalAmountElement.classList.remove('terminal-flash');
+                            resolve();
+                        }, 1000);
+                    }, 1500);
+                }, 1000);
+            });
+        }
+
+        // Handle payment
+        async function handlePayment() {
+            if (terminalAmount <= 0) {
+                paymentStatusElement.textContent = "Amount must be positive";
+                return;
+            }
+            
+            if (balance < terminalAmount) {
+                paymentStatusElement.textContent = "Insufficient funds";
+                return;
+            }
+            
+            // Disable buttons during payment
+            [payBtn, terminalMinusBtn, terminalPlusBtn, minusBtn, plusBtn].forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // Process payment
+            await animatePayment();
+            balance -= terminalAmount;
+            updateBalance();
+            paymentStatusElement.textContent = `Payment of €${terminalAmount} successful!`;
+            
+            // Re-enable buttons
+            [payBtn, terminalMinusBtn, terminalPlusBtn, minusBtn, plusBtn].forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Clear status after 3 seconds
+            setTimeout(() => {
+                paymentStatusElement.textContent = "";
+            }, 3000);
+        }
+
+        // Event listeners for balance buttons
+        minusBtn.addEventListener('click', () => {
+            if (balance >= 10) {
+                balance -= 10;
+                updateBalance();
+            }
+        });
+
+        plusBtn.addEventListener('click', () => {
+            balance += 10;
+            updateBalance();
+        });
+
+        // Event listeners for terminal amount buttons
+        terminalMinusBtn.addEventListener('click', () => {
+            if (terminalAmount > 5) {
+                terminalAmount -= 5;
+                updateTerminalAmount();
+            }
+        });
+
+        terminalPlusBtn.addEventListener('click', () => {
+            terminalAmount += 5;
+            updateTerminalAmount();
+        });
+
+        // Pay button
+        payBtn.addEventListener('click', handlePayment);
+
+        // Mouse events for rotation
+        cardContainer.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                cardContainer.style.cursor = 'grabbing';
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const moveX = e.clientX - startX;
+                const moveY = e.clientY - startY;
+                
+                rotateY = currentX + moveX;
+                rotateX = currentY - moveY;
+                
+                cardContainer.style.transform = `scale(${scale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                currentX = rotateY;
+                currentY = rotateX;
+                cardContainer.style.cursor = 'grab';
+            }
+        });
+
+        // Touch events for rotation and scaling
+        cardContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                isScaling = true;
+                startDistance = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                const moveX = e.touches[0].clientX - startX;
+                const moveY = e.touches[0].clientY - startY;
+                
+                rotateY = currentX + moveX;
+                rotateX = currentY - moveY;
+                
+                cardContainer.style.transform = `scale(${scale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            } else if (isScaling && e.touches.length === 2) {
+                const currentDistance = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                
+                scale = Math.min(Math.max(0.8, currentDistance / startDistance), 1.2);
+                cardContainer.style.transform = `scale(${scale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+            isScaling = false;
+            currentX = rotateY;
+            currentY = rotateX;
+        });
+
+        // Initialize
+        updateBalance();
+        updateTerminalAmount();
+    </script>
+</body>
+</html>
