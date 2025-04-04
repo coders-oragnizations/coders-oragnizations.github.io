@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeBank Finland - Card Payment Terminal</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a3a6e, #0c1f3d);
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .payment-scene {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            height: 500px;
+        }
+
+        /* Стили карты */
+        .card-container {
+            width: 300px;
+            height: 190px;
+            position: absolute;
+            top: 50px;
+            left: -350px;
+            cursor: grab;
+            z-index: 10;
+            transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0056b3, #003366);
+            border-radius: 15px;
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform-style: preserve-3d;
+            transition: transform 0.3s;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #001a33;
+            border-radius: 15px;
+            transform: translateZ(-5px);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            width: calc(100% - 10px);
+            height: calc(100% - 10px);
+            background: #00264d;
+            border-radius: 12px;
+            top: 5px;
+            left: 5px;
+            transform: translateZ(-3px);
+        }
+
+        .bank-logo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .bepay-logo {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .bebank-logo {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .card-number {
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-align: left;
+            margin: 25px 0 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .expiry-date {
+            font-size: 14px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .card-holder {
+            text-transform: uppercase;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .contactless-icon {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        /* Стили для баланса рядом с картой */
+        .balance-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-150%);
+            top: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            transition: opacity 0.5s;
+        }
+
+        /* Стили терминала */
+        .terminal {
+            width: 320px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            margin-top: 100px;
+        }
+
+        .terminal::before {
+            content: "";
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            height: 50px;
+            background: #333;
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        .terminal::after {
+            content: "";
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 15px;
+            background: #555;
+            border-radius: 5px;
+            z-index: 2;
+        }
+
+        .terminal-display {
+            background: #e0e0e0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            position: relative;
+            z-index: 3;
+            transition: background-color 0.5s;
+        }
+
+        .terminal-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .terminal-btn {
+            background: #0056b3;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+            transition: all 0.3s;
+        }
+
+        .terminal-btn:hover {
+            background: #003d82;
+        }
+
+        .pay-btn {
+            background: #28a745;
+            width: 100%;
+        }
+
+        .pay-btn:hover {
+            background: #218838;
+        }
+
+        .payment-status {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 24px;
+            color: #333;
+            transition: opacity 0.5s;
+        }
+
+        /* Анимации */
+        .processing {
+            background-color: #c8e6c9;
+            transition: background-color 0.5s;
+        }
+
+        /* Кнопки управления балансом */
+        .balance-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .balance-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .balance-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Обратная сторона карты */
+        .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #003366, #001a33);
+            border-radius: 15px;
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .magnetic-strip {
+            height: 40px;
+            background: #000;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .cvv-area {
+            background: #fff;
+            color: #000;
+            padding: 5px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .cvv-label {
+            margin-right: 10px;
+            font-size: 12px;
+        }
+
+        .cvv-value {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            width: 50px;
+            text-align: center;
+            background: #eee;
+            padding: 3px;
+            border-radius: 3px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: auto;
+        }
+
+        /* Состояния */
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-scene">
+        <!-- Баланс рядом с картой -->
+        <div class="balance-container" id="balanceContainer">
+            Balance: €<span id="balance">1000</span>
+        </div>
+
+        <!-- Карта -->
+        <div class="card-container" id="cardContainer">
+            <div class="card">
+                <!-- Лицевая сторона -->
+                <div class="card-front">
+                    <div class="bank-logo">
+                        <div class="bepay-logo">BEPay</div>
+                        <div class="bebank-logo">BeBank Finland</div>
+                    </div>
+                    <div class="card-number">5265 9087 6457 9237</div>
+                    <div class="expiry-date">12/50</div>
+                    <div class="card-holder">BEGULA BEGULICH</div>
+                    <div class="contactless-icon">⌘</div>
+                </div>
+                
+                <!-- Обратная сторона -->
+                <div class="card-back">
+                    <div class="magnetic-strip"></div>
+                    <div class="cvv-area">
+                        <div class="cvv-label">CVV</div>
+                        <div class="cvv-value">228</div>
+                    </div>
+                    <div class="signature-line">Authorized Signature</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Терминал -->
+        <div class="terminal" id="terminal">
+            <div class="terminal-display" id="terminalAmount">€5</div>
+            <div class="terminal-controls">
+                <button class="terminal-btn" id="terminalMinusBtn">-5€</button>
+                <button class="terminal-btn" id="terminalPlusBtn">+5€</button>
+            </div>
+            <button class="terminal-btn pay-btn" id="payBtn">Pay</button>
+            <div class="payment-status" id="paymentStatus"></div>
+        </div>
+
+        <!-- Кнопки управления балансом -->
+        <div class="balance-controls">
+            <button class="balance-btn" id="minusBtn">-10€</button>
+            <button class="balance-btn" id="plusBtn">+10€</button>
+        </div>
+    </div>
+
+    <script>
+        // Элементы
+        const cardContainer = document.getElementById('cardContainer');
+        const balanceElement = document.getElementById('balance');
+        const balanceContainer = document.getElementById('balanceContainer');
+        const terminalAmountElement = document.getElementById('terminalAmount');
+        const paymentStatusElement = document.getElementById('paymentStatus');
+        const minusBtn = document.getElementById('minusBtn');
+        const plusBtn = document.getElementById('plusBtn');
+        const terminalMinusBtn = document.getElementById('terminalMinusBtn');
+        const terminalPlusBtn = document.getElementById('terminalPlusBtn');
+        const payBtn = document.getElementById('payBtn');
+
+        // Данные
+        let balance = 1000;
+        let terminalAmount = 5;
+        let isDragging = false;
+        let startX, startY;
+        let offsetX = 0, offsetY = 0;
+        let animationFrameId = null;
+
+        // Обновление баланса
+        function updateBalance() {
+            balanceElement.textContent = balance;
+        }
+
+        // Обновление суммы в терминале
+        function updateTerminalAmount() {
+            terminalAmountElement.textContent = `€${terminalAmount}`;
+        }
+
+        // Плавная анимация проведения карты
+        function swipeCard() {
+            return new Promise((resolve) => {
+                const startTime = performance.now();
+                const duration = 2000; // 2 секунды
+                const startPos = -350;
+                const endPos = window.innerWidth + 350;
+                const terminalCenter = window.innerWidth / 2;
+                
+                function animate(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Кривая Безье для плавного ускорения и замедления
+                    const easeProgress = cubicBezier(progress, 0.42, 0, 0.58, 1);
+                    
+                    let currentPos;
+                    if (progress < 0.3) {
+                        // Первая фаза: подъезжаем к терминалу
+                        currentPos = startPos + (terminalCenter - startPos) * (progress / 0.3);
+                    } else if (progress < 0.7) {
+                        // Вторая фаза: медленно проходим через терминал
+                        currentPos = terminalCenter + (terminalCenter * 0.3) * ((progress - 0.3) / 0.4);
+                    } else {
+                        // Третья фаза: уезжаем за пределы экрана
+                        currentPos = terminalCenter * 1.3 + (endPos - terminalCenter * 1.3) * ((progress - 0.7) / 0.3);
+                    }
+                    
+                    cardContainer.style.left = `${currentPos}px`;
+                    
+                    if (progress < 1) {
+                        animationFrameId = requestAnimationFrame(animate);
+                    } else {
+                        resolve();
+                    }
+                }
+                
+                animationFrameId = requestAnimationFrame(animate);
+            });
+        }
+
+        // Функция кривой Безье для плавности
+        function cubicBezier(t, p1, p2, p3, p4) {
+            function A(a1, a2) { return 1 - 3 * a2 + 3 * a1; }
+            function B(a1, a2) { return 3 * a2 - 6 * a1; }
+            function C(a1) { return 3 * a1; }
+            
+            function calcBezier(t, a1, a2) {
+                return ((A(a1, a2) * t + B(a1, a2)) * t + C(a1)) * t;
+            }
+            
+            return calcBezier(t, p1, p3);
+        }
+
+        // Обработка платежа
+        async function processPayment() {
+            if (terminalAmount <= 0) {
+                showPaymentStatus("Amount must be positive", "error");
+                return;
+            }
+            
+            if (balance < terminalAmount) {
+                showPaymentStatus("Insufficient funds", "error");
+                return;
+            }
+
+            // Блокируем кнопки во время платежа
+            disableControls(true);
+            
+            // Прячем баланс
+            balanceContainer.classList.add('hidden');
+            
+            // Анимация проведения карты
+            await swipeCard();
+            
+            // Обработка платежа
+            balance -= terminalAmount;
+            updateBalance();
+            
+            // Анимация терминала
+            terminalAmountElement.classList.add('processing');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            terminalAmountElement.classList.remove('processing');
+            
+            // Показываем статус
+            showPaymentStatus(`Payment of €${terminalAmount} successful!`, "success");
+            
+            // Возвращаем карту на место
+            await resetCardPosition();
+            
+            // Показываем баланс
+            balanceContainer.classList.remove('hidden');
+            
+            // Разблокируем кнопки
+            disableControls(false);
+            
+            // Сбрасываем статус через 3 секунды
+            setTimeout(() => {
+                paymentStatusElement.textContent = "";
+                paymentStatusElement.style.opacity = "0";
+            }, 3000);
+        }
+
+        // Возврат карты в начальное положение
+        function resetCardPosition() {
+            return new Promise((resolve) => {
+                cardContainer.style.transition = "left 1s ease-out";
+                cardContainer.style.left = "-350px";
+                
+                setTimeout(() => {
+                    cardContainer.style.transition = "none";
+                    resolve();
+                }, 1000);
+            });
+        }
+
+        // Показать статус платежа
+        function showPaymentStatus(message, type) {
+            paymentStatusElement.textContent = message;
+            paymentStatusElement.style.color = type === "error" ? "#dc3545" : "#28a745";
+            paymentStatusElement.style.opacity = "1";
+        }
+
+        // Блокировка/разблокировка элементов управления
+        function disableControls(disabled) {
+            const controls = [payBtn, terminalMinusBtn, terminalPlusBtn, minusBtn, plusBtn];
+            controls.forEach(btn => {
+                if (disabled) {
+                    btn.classList.add('disabled');
+                    btn.disabled = true;
+                } else {
+                    btn.classList.remove('disabled');
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Обработчики событий
+        minusBtn.addEventListener('click', () => {
+            if (balance >= 10) {
+                balance -= 10;
+                updateBalance();
+            }
+        });
+
+        plusBtn.addEventListener('click', () => {
+            balance += 10;
+            updateBalance();
+        });
+
+        terminalMinusBtn.addEventListener('click', () => {
+            if (terminalAmount > 5) {
+                terminalAmount -= 5;
+                updateTerminalAmount();
+            }
+        });
+
+        terminalPlusBtn.addEventListener('click', () => {
+            terminalAmount += 5;
+            updateTerminalAmount();
+        });
+
+        payBtn.addEventListener('click', processPayment);
+
+        // Инициализация
+        updateBalance();
+        updateTerminalAmount();
+        
+        // Устанавливаем карту в начальное положение
+        cardContainer.style.left = "-350px";
+    </script>
+</body>
+</html>
