@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Rotating Card</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #1a1a1a;
+            perspective: 1000px;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .card-container {
+            width: 240px;
+            height: 320px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #3d3c3d, #323132);
+            transform: translateZ(1px);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #323132, #3d3c3d);
+            transform: rotateY(180deg);
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .light-effect {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: white;
+            filter: blur(60px);
+            opacity: 0.2;
+            border-radius: 50%;
+        }
+
+        .light-1 {
+            top: -50px;
+            left: -50px;
+        }
+
+        .light-2 {
+            bottom: -50px;
+            right: -50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container" id="cardContainer">
+        <div class="card">
+            <div class="card-front">
+                <div class="light-effect light-1"></div>
+                <div class="light-effect light-2"></div>
+                <div class="card-content">FRONT</div>
+            </div>
+            <div class="card-back">
+                <div class="light-effect light-1"></div>
+                <div class="light-effect light-2"></div>
+                <div class="card-content">BACK</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cardContainer = document.getElementById('cardContainer');
+        let isDragging = false;
+        let startX, startY;
+        let rotateX = 0, rotateY = 0;
+        let currentX = 0, currentY = 0;
+
+        // Mouse events
+        cardContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const moveX = e.clientX - startX;
+            const moveY = e.clientY - startY;
+            
+            rotateY = currentX + moveX;
+            rotateX = currentY - moveY;
+            
+            cardContainer.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            currentX = rotateY;
+            currentY = rotateX;
+        });
+
+        // Touch events for mobile
+        cardContainer.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            
+            const moveX = e.touches[0].clientX - startX;
+            const moveY = e.touches[0].clientY - startY;
+            
+            rotateY = currentX + moveX;
+            rotateX = currentY - moveY;
+            
+            cardContainer.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            currentX = rotateY;
+            currentY = rotateX;
+        });
+
+        // Auto-rotate when not interacting
+        let autoRotate = true;
+        let autoRotateInterval;
+
+        function startAutoRotate() {
+            autoRotateInterval = setInterval(() => {
+                if (!isDragging && autoRotate) {
+                    currentX += 0.5;
+                    cardContainer.style.transform = `rotateX(${currentY}deg) rotateY(${currentX}deg)`;
+                }
+            }, 50);
+        }
+
+        startAutoRotate();
+
+        // Pause auto-rotate on hover
+        cardContainer.addEventListener('mouseenter', () => {
+            autoRotate = false;
+        });
+
+        cardContainer.addEventListener('mouseleave', () => {
+            autoRotate = true;
+        });
+    </script>
+</body>
+</html>
